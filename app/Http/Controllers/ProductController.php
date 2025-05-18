@@ -9,27 +9,39 @@ use Illuminate\Http\Request;
 class ProductController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource for admin.
      */
     public function index()
     {
-        // Ambil semua produk beserta kategori
+        // Ambil semua produk beserta kategori untuk admin
         $products = Product::with('category')->get();
 
-        // Kirim data produk ke view
-        return view('products.index', compact('products'));
+        // Kirim data produk ke view admin
+        return view('admin.products.index', compact('products'));
     }
+
+    /**
+     * Display a listing of the resource for client.
+     */
+    public function clientIndex(Request $request)
+{
+    // Paginasi produk dengan 10 produk per halaman (misalnya)
+    $products = Product::paginate(10);  // Paginasi produk
+
+    // Kirim data produk ke view client
+    return view('client.products.index', compact('products'));
+}
 
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        // Ambil semua kategori untuk ditampilkan di dropdown
+        // Ambil semua kategori untuk ditampilkan di dropdown (tapi tidak perlu ditampilkan untuk kategori 'PRODUCTS')
         $categories = Category::all();
 
         // Tampilkan form untuk menambah produk
-        return view('products.create', compact('categories'));
+        return view('admin.products.create', compact('categories'));
     }
 
     /**
@@ -43,8 +55,10 @@ class ProductController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi gambar
-            'category_id' => 'required|exists:categories,id',
         ]);
+
+        // Ambil kategori 'PRODUCTS', atau buat jika belum ada
+        $category = Category::firstOrCreate(['name' => 'PRODUCTS']);
 
         // Menyimpan gambar
         $imagePath = $request->file('image')->store('images', 'public');
@@ -55,11 +69,11 @@ class ProductController extends Controller
             'description' => $request->description,
             'price' => $request->price,
             'image' => $imagePath, // Menyimpan path gambar
-            'category_id' => $request->category_id,
+            'category_id' => $category->id,  // Set category_id otomatis ke 'PRODUCTS'
         ]);
 
         // Redirect ke halaman produk
-        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
     /**
@@ -84,7 +98,7 @@ class ProductController extends Controller
         $categories = Category::all(); // Ambil semua kategori
 
         // Tampilkan form edit produk
-        return view('products.edit', compact('product', 'categories'));
+        return view('admin.products.edit', compact('product', 'categories'));
     }
 
     /**
@@ -98,17 +112,19 @@ class ProductController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Gambar opsional
-            'category_id' => 'required|exists:categories,id',
         ]);
 
         // Cari produk berdasarkan ID
         $product = Product::findOrFail($id);
 
+        // Ambil kategori 'PRODUCTS' atau buat jika belum ada
+        $category = Category::firstOrCreate(['name' => 'PRODUCTS']);
+
         // Update data produk
         $product->name = $request->name;
         $product->description = $request->description;
         $product->price = $request->price;
-        $product->category_id = $request->category_id;
+        $product->category_id = $category->id;  // Pastikan kategori 'PRODUCTS'
 
         // Jika ada gambar baru, simpan gambar dan update path-nya
         if ($request->hasFile('image')) {
@@ -120,7 +136,7 @@ class ProductController extends Controller
         $product->save();
 
         // Redirect ke halaman produk
-        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
     /**
@@ -140,6 +156,18 @@ class ProductController extends Controller
         $product->delete();
 
         // Redirect ke halaman produk
-        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus!');
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus!');
+    }
+
+    /**
+     * Show the details of a product for client.
+     */
+    public function clientShow($id)
+    {
+        // Ambil detail produk berdasarkan ID
+        $product = Product::findOrFail($id);
+        
+        // Tampilkan detail produk untuk client
+        return view('client.products.show', compact('product'));
     }
 }
