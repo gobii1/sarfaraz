@@ -1,4 +1,4 @@
-<footer class="site-footer">
+{{-- <footer class="site-footer">
     <div class="site-footer-shape-1" style="background-image: url({{ asset('assets/images/shapes/site-footer-shape-1.png') }});">
     </div>
     <div class="site-footer-shape-two">
@@ -86,4 +86,4 @@
             </div>
         </div>
     </div>
-</footer>
+</footer> --}}

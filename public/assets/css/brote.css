@@ -665,16 +665,18 @@ ul {
 }
 
 .main-menu__wrapper-inner {
-  display: block;
+  /* display: block; */ /* Baris asli, hapus atau jadikan komentar */
+  display: flex; /* TAMBAHKAN INI */
+  justify-content: space-between; /* TAMBAHKAN INI */
+  align-items: center; /* TAMBAHKAN INI */
   background-color: var(--brote-base);
   padding-left: 40px;
   padding-right: 40px;
   border-radius: 10px;
 }
-
 .main-menu__left {
   display: block;
-  float: left;
+  /* float: left; */ /* Baris asli, hapus atau jadikan komentar */
 }
 
 .main-menu__main-menu-box {
@@ -682,9 +684,12 @@ ul {
 }
 
 .main-menu__right {
-  position: relative;
-  display: block;
-  float: right;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important; /* <<< INI KUNCINYA untuk item di DALAM .main-menu__right */
+  margin-left: auto;
+  gap: 15px;
 }
 
 .main-menu__search-box {
@@ -757,6 +762,73 @@ ul {
   padding-right: 0px;
   border-radius: 0;
 }
+
+.main-menu__search-box {
+    padding: 0; /* Reset padding pada container .main-menu__search-box */
+                /* Padding asli (23px 0) ada di brote.css line 526, kita pindahkan ke link <a> di bawah */
+}
+
+/* Opsional: Menghilangkan garis vertikal di kiri search box jika tidak diinginkan */
+/* Jika masih ingin ada, mungkin perlu penyesuaian posisi atau dibuat ulang dengan border */
+.main-menu__search-box:before {
+    display: none; /* Baris asli (brote.css line 530) menambahkan garis, ini menyembunyikannya */
+}
+
+/* Style untuk kontainer baru yang ditambahkan (cart, user, login) */
+.main-menu__cart,
+.main-menu__user-account,
+.main-menu__login {
+    display: flex; /* Agar bisa mengatur alignment item di dalamnya jika ada */
+    align-items: center;
+}
+
+/* Style untuk tombol/link yang bisa diklik di dalam item kanan */
+/* Ini untuk menyeragamkan tampilan, ukuran, dan alignment vertikal */
+.main-menu__cart-btn,
+.main-menu__search-box .main-menu__search, /* Target link <a> di dalam .main-menu__search-box */
+.main-menu__user-btn,
+.main-menu__login a.thm-btn.main-menu__login-btn { /* Target link login yang menggunakan .thm-btn */
+    padding: 8px 10px; /* Padding seragam. Sesuaikan agar tinggi tombol/ikon pas. */
+                       /* Padding asli .main-menu__search-box (23px 0) terlalu besar untuk disejajarkan */
+    display: flex;
+    align-items: center;
+    line-height: 1; /* Mencegah tinggi baris teks menambah tinggi elemen */
+    color: var(--brote-white); /* Warna default untuk ikon/teks di navigasi ini */
+    text-decoration: none;
+}
+
+/* Khusus untuk tombol login .thm-btn (jika ada) agar lebih menyatu */
+/* .thm-btn (brote.css line 224) punya banyak style, kita override seperlunya */
+.main-menu__login a.thm-btn.main-menu__login-btn {
+    background-color: transparent; /* Hapus background asli .thm-btn */
+    /* Reset style lain dari .thm-btn jika perlu agar konsisten */
+    font-size: 16px; /* Sesuaikan dengan link menu utama */
+    font-weight: 500; /* Sesuaikan dengan link menu utama */
+    text-transform: none; /* Hapus uppercase dari .thm-btn */
+    letter-spacing: normal; /* Hapus letter-spacing dari .thm-btn */
+    /* Padding sudah diatur di rule sebelumnya (.main-menu__login a.thm-btn.main-menu__login-btn) */
+}
+/* Sembunyikan ikon default dari .thm-btn jika tombol login ini hanya teks atau sudah ada ikon kustom */
+.main-menu__login a.thm-btn.main-menu__login-btn i {
+    display: none; /* brote.css line 238 menambahkan ikon, ini menyembunyikannya */
+}
+
+/* Penyesuaian margin untuk ikon dan teks di dalam tombol agar rapi */
+.main-menu__cart-btn > i,
+.main-menu__cart-btn > span.main-menu__cart-count {
+    margin-left: 2px;
+    margin-right: 2px;
+}
+.main-menu__cart-btn > *:first-child { margin-left: 0; } /* Hilangkan margin di elemen pertama */
+.main-menu__cart-btn > *:last-child { margin-right: 0; } /* Hilangkan margin di elemen terakhir */
+
+.main-menu__user-btn > i,
+.main-menu__user-btn > span {
+    margin-left: 3px;
+    margin-right: 3px;
+}
+.main-menu__user-btn > *:first-child { margin-left: 0; }
+.main-menu__user-btn > *:last-child { margin-right: 0; }
 
 .main-menu .main-menu__list,
 .main-menu .main-menu__list>li>ul,

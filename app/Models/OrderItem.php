@@ -22,7 +22,7 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
-    // Relasi dengan Product
+    // --- BARU: Relasi dengan Product ---
     public function product()
     {
         return $this->belongsTo(Product::class);

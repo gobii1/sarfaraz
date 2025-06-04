@@ -1,25 +1,14 @@
-{{-- resources/views/orders/index.blade.php (untuk client) --}}
-@extends('layouts.app') {{-- Sesuaikan dengan layout client Anda, kemungkinan 'layouts.app' atau 'client.layout' --}}
+@extends('layouts.layout') {{-- Pastikan ini sesuai dengan layout admin Anda --}}
 
-@section('title', 'Daftar Pesanan Saya')
+{{-- Definisi title dan subTitle yang akan dioper ke x-breadcrumb --}}
+@section('title', 'Manajemen Pesanan')
+{{-- @section('subTitle', 'Daftar Pesanan') --}} {{-- Opsional, jika Anda ingin subTitle di breadcrumb --}}
 
 @section('content')
-<section class="page-header">
-    <div class="page-header-bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }})">
-    </div>
-    <div class="container">
-        <div class="page-header__inner">
-            <ul class="thm-breadcrumb list-unstyled">
-                <li><a href="{{ route('client.dashboard') }}">Home</a></li>
-                <li><span>/</span></li>
-                <li>Pesanan Saya</li>
-            </ul>
-            <h2>Pesanan Saya</h2>
-        </div>
-    </div>
-</section>
+{{-- Hapus seluruh kode <section class="page-header">...</section> dari sini.
+    Yang akan merender breadcrumb dan title adalah <x-breadcrumb /> di layouts/layout.blade.php --}}
 
-<section class="my-order-list-section py-5">
+<section class="order-list-section py-5">
     <div class="container">
         @if (session('success'))
             <div class="alert alert-success">
@@ -33,8 +22,8 @@
         @enderror
 
         <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0">Daftar Pesanan Anda</h3>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Daftar Semua Pesanan</h3>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -42,11 +31,12 @@
                         <thead>
                             <tr>
                                 <th>ID Pesanan</th>
-                                <th>Ringkasan Pesanan</th> {{-- Kolom Baru --}}
+                                <th>Ringkasan Pesanan</th>
+                                <th>User</th>
                                 <th>Total Harga</th>
                                 <th>Status Pesanan</th>
                                 <th>Status Pembayaran</th>
-                                <th>Tanggal Pesan</th>
+                                <th>Tanggal Dibuat</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -56,7 +46,6 @@
                                     <td>#{{ $order->id }}</td>
                                     <td>
                                         @if ($order->orderItems->isNotEmpty())
-                                            {{-- Tampilkan nama produk pertama --}}
                                             <strong>{{ $order->orderItems->first()->product->name ?? 'Produk Dihapus' }}</strong>
                                             @if ($order->orderItems->count() > 1)
                                                 <br>+ {{ $order->orderItems->count() - 1 }} produk lainnya
@@ -64,7 +53,8 @@
                                         @else
                                             Tidak ada item
                                         @endif
-                                    </td> {{-- Isi Kolom Baru --}}
+                                    </td>
+                                    <td>{{ $order->user->name ?? 'User Dihapus' }}</td>
                                     <td>Rp{{ number_format($order->total_price, 0, ',', '.') }}</td>
                                     <td>
                                         <span class="badge {{
@@ -84,16 +74,24 @@
                                     </td>
                                     <td>{{ $order->created_at->format('d M Y H:i') }}</td>
                                     <td>
-                                        <a href="{{ route('orders.show', $order->id) }}" class="btn btn-sm btn-primary">Lihat Detail</a>
-                                        {{-- Tambahkan tombol batalkan pesanan jika statusnya pending dan belum dibayar --}}
-                                        {{-- @if ($order->status == 'pending' && $order->payment_status == 'pending')
-                                            <a href="#" class="btn btn-sm btn-danger">Batalkan</a>
-                                        @endif --}}
+                                        <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-info" title="Lihat Detail">
+                                            <iconify-icon icon="ri:eye-line"></iconify-icon>
+                                        </a>
+                                        <a href="{{ route('admin.orders.edit', $order->id) }}" class="btn btn-sm btn-primary" title="Edit">
+                                            <iconify-icon icon="ri:edit-line"></iconify-icon>
+                                        </a>
+                                        <form action="{{ route('admin.orders.destroy', $order->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pesanan ini? Aksi ini tidak dapat dibatalkan dan stok produk akan dikembalikan.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
+                                                <iconify-icon icon="ri:delete-bin-line"></iconify-icon>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">Anda belum memiliki pesanan.</td> {{-- Jumlah colspan disesuaikan --}}
+                                    <td colspan="8" class="text-center">Belum ada pesanan yang tersedia.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -103,30 +101,4 @@
         </div>
     </div>
 </section>
-@endsection
-
-@section('styles')
-<style>
-    .badge {
-        padding: 0.35em 0.65em;
-        font-size: 0.75em;
-        font-weight: 700;
-        line-height: 1;
-        color: #fff;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 0.25rem;
-    }
-    .bg-warning { background-color: #ffc107 !important; color: #000 !important; }
-    .bg-success { background-color: #28a745 !important; }
-    .bg-danger { background-color: #dc3545 !important; }
-    .bg-info { background-color: #17a2b8 !important; }
-    .bg-secondary { background-color: #6c757d !important; }
-    .btn-primary {
-        color: #fff;
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-</style>
 @endsection

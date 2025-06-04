@@ -64,41 +64,49 @@
     <nav class="main-menu clearfix">
         <div class="main-menu__wrapper clearfix">
             <div class="container">
+                {{-- Kontainer ini akan kita jadikan flex --}}
                 <div class="main-menu__wrapper-inner clearfix">
                     <div class="main-menu__left">
                         <div class="main-menu__main-menu-box">
                             <a href="#" class="mobile-nav__toggler"><i class="fa fa-bars"></i></a>
-                            <!-- Header Navigation -->
-                                <ul class="main-menu__list">
-                                    <li class="{{ Request::routeIs('client.dashboard') ? 'current' : '' }}">
-                                        <a href="{{ route('client.dashboard') }}">Home</a>
-                                    </li>
-                                    <li class="{{ Request::routeIs('client.about') ? 'current' : '' }}">
-                                        <a href="{{ route('client.about') }}">About</a>
-                                    </li>
-                                    <li class="{{ Request::routeIs('jasa.index') ? 'current' : '' }}">
-                                        <a href="{{ route('jasa.index') }}">Services</a>
-                                    </li>
-                                    <li class="{{ Request::routeIs('products.index') ? 'current' : '' }}">
-                                        <a href="{{ route('products.index') }}">Products</a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ url('/contact') }}">Contact</a>
-                                    </li>
-                                </ul>
+                            <ul class="main-menu__list">
+                                <li class="{{ Request::routeIs('client.dashboard') ? 'current' : '' }}">
+                                    <a href="{{ route('client.dashboard') }}">Home</a>
+                                </li>
+                                <li class="{{ Request::routeIs('client.about') ? 'current' : '' }}">
+                                    <a href="{{ route('client.about') }}">About</a>
+                                </li>
+                                <li class="{{ Request::routeIs('jasa.index') ? 'current' : '' }}">
+                                    <a href="{{ route('jasa.index') }}">Services</a>
+                                </li>
+                                <li class="{{ Request::routeIs('products.index') ? 'current' : '' }}">
+                                    <a href="{{ route('products.index') }}">Products</a>
+                                </li>
+                                <li>
+                                    <a href="{{ url('/contact') }}">Contact</a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
+                    {{-- Kontainer ini juga akan kita jadikan flex untuk item di dalamnya --}}
                     <div class="main-menu__right">
+                        @auth
+                            {{-- 1. CART (muncul pertama saat login) --}}
+                            <div class="main-menu__cart">
+                                <a href="{{ route('client.cart.index') }}" class="main-menu__cart-btn">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span class="main-menu__cart-count">{{ $cartCount }}</span>
+                                </a>
+                            </div>
+                        @endauth
+
+                        {{-- 2. SEARCH BOX (selalu ada, atau kedua saat login) --}}
                         <div class="main-menu__search-box">
                             <a href="#" class="main-menu__search search-toggler icon-magnifying-glass"></a>
                         </div>
+
                         @auth
-                            <div class="main-menu__cart">
-                                <a href="{{ route('client.cart.index') }}" class="main-menu__cart-btn">
-                                    <i class="icon-shopping-cart"></i>
-                                    <span class="main-menu__cart-count">0</span>
-                                </a>
-                            </div>
+                            {{-- 3. USER ACCOUNT (muncul ketiga saat login) --}}
                             <div class="main-menu__user-account">
                                 <div class="dropdown">
                                     <a href="#" class="main-menu__user-btn dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -121,7 +129,10 @@
                                 </div>
                             </div>
                         @else
+                            {{-- ATAU LOGIN BUTTON (muncul setelah search jika belum login) --}}
                             <div class="main-menu__login">
+                                {{-- Tombol login ini punya style sendiri dari .thm-btn di brote.css --}}
+                                {{-- Jika ingin tampilannya sama dengan ikon lain, perlu override lebih banyak atau ganti class --}}
                                 <a href="{{ route('login') }}" class="thm-btn main-menu__login-btn">Login</a>
                             </div>
                         @endauth

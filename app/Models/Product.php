@@ -1,7 +1,5 @@
 <?php
 
-// app/Models/Product.php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,18 +9,29 @@ class Product extends Model
 {
     use HasFactory;
 
-    // Menambahkan kolom yang bisa diisi dengan mass assignment
     protected $fillable = [
         'name',
         'description',
         'price',
         'image',
         'category_id',
+        'stock', // Ini sudah benar
     ];
 
-    // Relasi dengan Category
+    protected $casts = [
+        'price' => 'decimal:2',
+        'stock' => 'integer', // Pastikan 'stock' di-cast ke integer
+    ];
+
+    // ... relasi atau method lainnya ...
+
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 }

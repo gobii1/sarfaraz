@@ -7,29 +7,29 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\JasaController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ClientDashboardController;
-use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\MidtransCallbackController;
 use Illuminate\Support\Facades\Route;
 
 /*
-|---------------------------------------------------------------------- 
+|--------------------------------------------------------------------------
 | Web Routes
-|---------------------------------------------------------------------- 
-| Here is where you can register web routes for your application.
-| These routes are loaded by the RouteServiceProvider and all of them 
-| will be assigned to the "web" middleware group. Make something great!
+|--------------------------------------------------------------------------
 */
 
-// Route untuk halaman welcome (landing page)
+// 🏠 Landing Page
 Route::get('/', function () {
     return view('welcome');
 });
 
-// Route untuk halaman contact yang tidak memerlukan autentikasi
-Route::get('/contact', function() {
+// 📞 Contact Page (tanpa login)
+Route::get('/contact', function () {
     return view('client.contact');
 })->name('contact');
 
-// Route default yang mengarahkan ke halaman dashboard berdasarkan role
+// 📬 MIDTRANS CALLBACK — Jangan di-protect middleware (PENTING!)
+Route::post('/midtrans/callback', [MidtransCallbackController::class, 'receive'])->name('midtrans.callback');
+
+// 🧭 Redirect Dashboard berdasarkan Role (setelah login)
 Route::get('/dashboard', function () {
     if (auth()->user()->role == 'admin') {
         return redirect()->route('admin.dashboard');
@@ -43,100 +43,97 @@ Route::get('/dashboard', function () {
         return redirect()->route('owner.dashboard');
     }
 
-    return redirect()->route('client.dashboard');  // Untuk client
+    return redirect()->route('client.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Middleware untuk Profile pengguna (untuk mengedit profile)
+// 👤 Profile (untuk semua user yang sudah login)
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Rute untuk Admin (hanya bisa diakses oleh admin)
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin-dashboard', function () {
-        return view('admin.dashboard'); // Dashboard khusus admin
-    })->name('admin.dashboard');
-    
-    // Rute untuk produk
-    Route::resource('admin/products', ProductController::class)->names([
-        'index' => 'admin.products.index',
-        'create' => 'admin.products.create',
-        'store' => 'admin.products.store',
-        'show' => 'admin.products.show',
-        'edit' => 'admin.products.edit',
-        'update' => 'admin.products.update',
-        'destroy' => 'admin.products.destroy',
+// 🛠️ Admin Routes - HANYA UNTUK ROLE ADMIN
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard Admin
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('dashboard'); // names 'admin.dashboard'
+
+    // Manajemen Produk (Admin)
+    Route::resource('products', ProductController::class)->names([
+        'index'   => 'products.index',
+        'create'  => 'products.create',
+        'store'   => 'products.store',
+        'show'    => 'products.show',
+        'edit'    => 'products.edit',
+        'update'  => 'products.update',
+        'destroy' => 'products.destroy',
     ]);
-    
-    // Rute untuk kategori
-    Route::resource('categories', CategoryController::class);
-    
-    // Rute untuk jasa
-    Route::resource('admin/jasa', JasaController::class)->names([
-        'index' => 'admin.jasa.index',
-        'create' => 'admin.jasa.create',
-        'store' => 'admin.jasa.store',
-        'show' => 'admin.jasa.show',
-        'edit' => 'admin.jasa.edit',
-        'update' => 'admin.jasa.update',
-        'destroy' => 'admin.jasa.destroy',
+
+    // Manajemen Kategori (Admin) - Sesuaikan jika ini juga harus punya prefix admin
+    Route::resource('categories', CategoryController::class); // names 'categories.index', etc.
+
+    // Manajemen Jasa (Admin)
+    Route::resource('jasa', JasaController::class)->names([
+        'index'   => 'jasa.index',
+        'create'  => 'jasa.create',
+        'store'   => 'jasa.store',
+        'show'    => 'jasa.show',
+        'edit'    => 'jasa.edit',
+        'update'  => 'jasa.update',
+        'destroy' => 'jasa.destroy',
     ]);
-    
-    // Rute untuk order
-    Route::resource('admin/orders', OrderController::class)->names([
-        'index' => 'admin.orders.index',
-        'show' => 'admin.orders.show',
-        'edit' => 'admin.orders.edit',
-        'update' => 'admin.orders.update',
-    ]);
+
+    // Manajemen Pesanan (Admin) - Ini akan mencakup edit, update, destroy
+    Route::resource('orders', OrderController::class)->except(['create', 'store']); // Order dibuat oleh client, tidak oleh admin
+
+    // Rute tambahan untuk update status order oleh admin (jika ingin terpisah dari resource update)
+    // Method updateStatus() di OrderController Anda punya cek role 'admin', jadi cocok di sini.
+    Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update.status');
 });
 
-// Rute untuk Client (akses untuk client dan admin)
+// 🧑‍💼 Client Routes - Untuk Client dan juga Admin (jika admin ingin akses tampilan client)
 Route::middleware(['auth', 'role:client,admin'])->group(function () {
+    // Dashboard Client
     Route::get('/client-dashboard', [ClientDashboardController::class, 'index'])->name('client.dashboard');
-    
-    // Rute untuk produk client
+
+    // Produk (Client)
     Route::get('/products', [ProductController::class, 'clientIndex'])->name('products.index');
     Route::get('/products/{id}', [ProductController::class, 'clientShow'])->name('products.show');
+    // Jika Anda menggunakan AJAX untuk quick view produk, pastikan path-nya benar
     Route::get('/products/ajax/{product}', [ProductController::class, 'ajaxShow'])->name('products.ajax.show');
-    
-    // Jasa untuk client
+
+    // Jasa (Client)
     Route::get('/jasa', [JasaController::class, 'clientIndex'])->name('jasa.index');
     Route::get('/jasa/{id}', [JasaController::class, 'show'])->name('jasa.show');
 
-    // Keranjang Belanja
+    // Keranjang (Client)
     Route::get('/cart', [CartController::class, 'index'])->name('client.cart.index');
     Route::post('/cart', [CartController::class, 'add'])->name('cart.add');
-    Route::post('cart/update', [CartController::class, 'update'])->name('cart.update');
+    Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{id}', [CartController::class, 'remove'])->name('cart.remove');
-    
-    // Route untuk Checkout - PERBAIKAN DISINI
-    Route::get('checkout', [OrderController::class, 'checkout'])->name('client.cart.checkout');
-Route::post('checkout', [OrderController::class, 'store'])->name('client.orders.store'); // Ubah nama route ini // Ubah nama route ini
-    
-    // Pesanan client
-    Route::get('/orders', [OrderController::class, 'clientIndex'])->name('orders.index');
-    Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
-    Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
-    Route::patch('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
-    Route::delete('/orders/{id}', [OrderController::class, 'destroy'])->name('orders.destroy');
-    
-    // Rute untuk mengubah status pesanan
-    Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update.status');
-    
-    // Halaman About
-    Route::get('/about', function() {
+
+    // Checkout & Order (Client)
+    Route::get('/checkout', [OrderController::class, 'checkout'])->name('client.cart.checkout'); // Tampilkan form checkout
+    Route::post('/checkout', [OrderController::class, 'store'])->name('client.orders.store');  // Proses checkout
+
+    // Pesanan Client - HANYA VIEWING (index dan show)
+    // Edit, update, destroy, updateStatus order oleh client TIDAK disarankan.
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index'); // Daftar pesanan user
+    Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show'); // Detail pesanan user
+
+    // --- DIHAPUS DARI GROUP CLIENT: Rute edit, update, dan destroy order oleh client
+    // Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+    // Route::patch('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
+    // Route::delete('/orders/{id}', [OrderController::class, 'destroy'])->name('orders.destroy');
+    // Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.update.status'); // Pindah ke admin group
+
+    // Tentang (Client)
+    Route::get('/about', function () {
         return view('client.about');
     })->name('client.about');
-
-    // Checkout routes
-Route::middleware(['auth'])->group(function () {
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('checkout.process');
-});
 });
 
-// Autentikasi
-require __DIR__.'/auth.php';
+// 🔐 Auth routes (dari Breeze/Jetstream)
+require __DIR__ . '/auth.php';

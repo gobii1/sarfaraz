@@ -2,47 +2,100 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory; // Tambahkan ini jika belum ada
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany; // Tambahkan ini
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // Tambahkan ini jika belum ada
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory; // Tambahkan ini jika belum ada
 
     protected $fillable = [
-        'user_id', 
-        'status', 
+        'user_id',
         'total_price',
-        'address',
+        'status',
+        'payment_status',
+        'snap_token',
+        'midtrans_transaction_id', // Pastikan kolom ini ada di database dan ditambahkan di fillable
     ];
 
-    // Relasi dengan OrderItem
-    public function items()
-    {
-        return $this->hasMany(OrderItem::class);
-    }
-
-    // Relasi dengan User
-    public function user()
+    /**
+     * Get the user that owns the Order.
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // Mengatur status order
-    public function setStatus($status)
+    /**
+     * Get the order items for the order.
+     * Ini adalah relasi yang hilang yang menyebabkan error Anda.
+     */
+    public function orderItems(): HasMany
     {
-        $this->status = $status;
-        $this->save();
+        return $this->hasMany(OrderItem::class);
     }
 
-    // Menghitung total harga pesanan
-    public function calculateTotalPrice()
+
+    // Helper methods Anda yang sudah ada
+    public function needsPayment()
     {
-        $total = 0;
-        foreach ($this->items as $item) {
-            $total += $item->price * $item->quantity;
-        }
-        $this->total_price = $total;
-        $this->save();
+        return $this->payment_status === 'pending';
+    }
+
+    public function isPaid()
+    {
+        return in_array($this->payment_status, ['settlement', 'capture']);
+    }
+
+    public function isPaymentFailed()
+    {
+        return in_array($this->payment_status, ['cancel', 'expire', 'deny']);
+    }
+
+    public function getStatusBadgeColor()
+    {
+        return match($this->status) {
+            'pending' => 'warning',
+            'processing' => 'info',
+            'completed' => 'success',
+            'cancelled' => 'danger',
+            default => 'secondary'
+        };
+    }
+
+    public function getPaymentStatusBadgeColor()
+    {
+        return match($this->payment_status) {
+            'pending' => 'warning',
+            'settlement', 'capture' => 'success',
+            'cancel', 'expire', 'deny' => 'danger',
+            default => 'secondary'
+        };
+    }
+
+    public function getStatusText()
+    {
+        return match($this->status) {
+            'pending' => 'Menunggu Konfirmasi',
+            'processing' => 'Sedang Diproses',
+            'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
+            default => 'Unknown'
+        };
+    }
+
+    public function getPaymentStatusText()
+    {
+        return match($this->payment_status) {
+            'pending' => 'Menunggu Pembayaran',
+            'settlement' => 'Pembayaran Berhasil',
+            'capture' => 'Pembayaran Berhasil',
+            'cancel' => 'Pembayaran Dibatalkan',
+            'expire' => 'Pembayaran Kadaluarsa',
+            'deny' => 'Pembayaran Ditolak',
+            default => 'Unknown'
+        };
     }
 }

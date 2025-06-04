@@ -3,7 +3,6 @@
 @section('title', $product->name . ' - Cleaning Services')
 
 @section('content')
-<!-- Page Header -->
 <section class="page-header">
     <div class="page-header-bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }})">
     </div>
@@ -21,7 +20,6 @@
     </div>
 </section>
 
-<!-- Product Details Section -->
 <section class="product-details">
     <div class="container">
         <div class="row">
@@ -57,6 +55,19 @@
                     <div class="product-details__category">
                         <p><span>Category:</span> {{ $product->category->name ?? 'Uncategorized' }}</p>
                     </div>
+
+                    {{-- --- BARU: TAMPILAN STOK DI DETAIL PRODUK --- --}}
+                    <div class="product-details__stock mb-4">
+                        <p>
+                            <strong>Stok:</strong> **{{ $product->stock }}**
+                            @if ($product->stock <= 5 && $product->stock > 0)
+                                <span class="text-warning fw-bold">(Stok Terbatas!)</span>
+                            @elseif ($product->stock === 0)
+                                <span class="text-danger fw-bold">(Stok Habis!)</span>
+                            @endif
+                        </p>
+                    </div>
+                    {{-- --- AKHIR TAMPILAN STOK --- --}}
                     
                     <form action="{{ route('cart.add') }}" method="POST" class="product-details__form">
                         @csrf
@@ -65,12 +76,18 @@
                             <h3 class="product-details__quantity-title">Quantity</h3>
                             <div class="quantity-box">
                                 <button type="button" class="sub">-</button>
-                                <input type="number" id="quantity" name="quantity" value="1" min="1">
+                                {{-- BARU: Tambahkan atribut max="{{ $product->stock }}" pada input kuantitas --}}
+                                <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ $product->stock }}">
                                 <button type="button" class="add">+</button>
                             </div>
                         </div>
                         <div class="product-details__buttons">
-                            <button type="submit" class="thm-btn product-details__add-to-cart">Add to Cart</button>
+                            {{-- BARU: Logika tombol Add to Cart berdasarkan stok --}}
+                            @if ($product->stock > 0)
+                                <button type="submit" class="thm-btn product-details__add-to-cart">Add to Cart</button>
+                            @else
+                                <button type="button" class="thm-btn product-details__add-to-cart disabled" disabled>Stok Habis</button>
+                            @endif
                             <a href="#" class="product-details__wishlist"><i class="far fa-heart"></i></a>
                         </div>
                     </form>
@@ -97,7 +114,6 @@
                         </div>
                         <div class="tab-pane fade" id="reviews" role="tabpanel">
                             <div class="product-details__reviews-content">
-                                <!-- Reviews would go here -->
                                 <div class="product-details__review-item">
                                     <div class="product-details__review-img">
                                         <img src="{{ asset('assets/images/testimonial/testimonial-1-1.jpg') }}" alt="">
@@ -117,7 +133,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Review Form -->
                                 <div class="product-details__review-form">
                                     <h3 class="product-details__review-form-title">Add a Review</h3>
                                     <form action="#" method="post">
@@ -162,7 +177,6 @@
     </div>
 </section>
 
-<!-- Related Products Section -->
 <section class="related-products">
     <div class="container">
         <div class="section-title text-center">
@@ -186,7 +200,12 @@
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $relatedProduct->id }}">
                                     <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="thm-btn product-card__add-to-cart-btn">Add to Cart</button>
+                                    {{-- BARU: Logika tombol Add to Cart untuk related products --}}
+                                    @if ($relatedProduct->stock > 0)
+                                        <button type="submit" class="thm-btn product-card__add-to-cart-btn">Add to Cart</button>
+                                    @else
+                                        <button type="button" class="thm-btn product-card__add-to-cart-btn disabled" disabled>Stok Habis</button>
+                                    @endif
                                 </form>
                             </div>
                         </div>
@@ -194,6 +213,15 @@
                             <div class="product-card__category">{{ $relatedProduct->category->name ?? 'Uncategorized' }}</div>
                             <h3 class="product-card__title"><a href="{{ route('products.show', $relatedProduct->id) }}">{{ $relatedProduct->name }}</a></h3>
                             <p class="product-card__price">Rp {{ number_format($relatedProduct->price, 0, ',', '.') }}</p>
+                            {{-- BARU: Tampilan stok untuk related products --}}
+                            <p class="product-card__stock">
+                                Stok: <strong>{{ $relatedProduct->stock }}</strong>
+                                @if ($relatedProduct->stock <= 5 && $relatedProduct->stock > 0)
+                                    <span class="text-warning fw-bold">(Terbatas!)</span>
+                                @elseif ($relatedProduct->stock === 0)
+                                    <span class="text-danger fw-bold">(Habis)</span>
+                                @endif
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -441,6 +469,55 @@
         padding: 80px 0;
         background-color: #f8f9fa;
     }
+
+    /* --- BARU: CSS UNTUK TAMPILAN STOK --- */
+    .product-details__stock {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px; /* Sesuaikan jarak */
+    }
+    .product-details__stock .text-warning {
+        color: #ffc107; /* Warna kuning untuk terbatas */
+    }
+    .product-details__stock .text-danger {
+        color: #dc3545; /* Warna merah untuk habis */
+    }
+
+    /* Styling untuk tombol Add to Cart yang disabled */
+    .product-details__add-to-cart.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #6c757d; /* Warna abu-abu */
+        border-color: #6c757d;
+    }
+    .product-details__add-to-cart.disabled:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    /* Styling tambahan untuk product-card__stock di related products (jika belum ada) */
+    .product-card__stock {
+        font-size: 15px;
+        margin-top: 5px; /* Sesuaikan jaraknya */
+        color: #555;
+    }
+    .product-card__stock .text-warning {
+        color: #ffc107;
+    }
+    .product-card__stock .text-danger {
+        color: #dc3545;
+    }
+    .product-card__add-to-cart-btn.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .product-card__add-to-cart-btn.disabled:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    /* --- AKHIR BARU: CSS UNTUK TAMPILAN STOK --- */
 </style>
 @endsection
 
@@ -448,17 +525,36 @@
 <script>
     $(document).ready(function() {
         // Quantity buttons functionality
-        $('.add').on('click', function() {
-            var $qty = $(this).closest('.quantity-box').find('input');
-            var currentVal = parseInt($qty.val());
-            $qty.val(currentVal + 1);
+        $('.quantity-box .add').on('click', function() {
+            var $qtyInput = $(this).closest('.quantity-box').find('input[name="quantity"]'); // Select by name for safety
+            var currentVal = parseInt($qtyInput.val());
+            var maxStock = parseInt($qtyInput.attr('max')); // Get max value from attribute
+
+            if (!isNaN(currentVal) && currentVal < maxStock) { // Ensure not to exceed max stock
+                $qtyInput.val(currentVal + 1);
+            }
         });
         
-        $('.sub').on('click', function() {
-            var $qty = $(this).closest('.quantity-box').find('input');
-            var currentVal = parseInt($qty.val());
-            if (currentVal > 1) {
-                $qty.val(currentVal - 1);
+        $('.quantity-box .sub').on('click', function() {
+            var $qtyInput = $(this).closest('.quantity-box').find('input[name="quantity"]'); // Select by name for safety
+            var currentVal = parseInt($qtyInput.val());
+            var minVal = parseInt($qtyInput.attr('min')); // Get min value from attribute
+
+            if (!isNaN(currentVal) && currentVal > minVal) { // Ensure not to go below min (usually 1)
+                $qtyInput.val(currentVal - 1);
+            }
+        });
+
+        // Ensure input quantity does not exceed stock or go below minimum
+        $('#quantity').on('change', function() {
+            var currentVal = parseInt($(this).val());
+            var maxStock = parseInt($(this).attr('max'));
+            var minVal = parseInt($(this).attr('min'));
+
+            if (isNaN(currentVal) || currentVal < minVal) {
+                $(this).val(minVal);
+            } else if (currentVal > maxStock) {
+                $(this).val(maxStock);
             }
         });
         

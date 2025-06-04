@@ -55,7 +55,7 @@
 
             <!-- Categories Section -->
             <li class="dropdown {{ Request::routeIs('categories.*') ? 'active' : '' }}">
-                <a href="{{ route('categories.index') }}">
+                <a href="{{ route('admin.categories.index') }}">
                     <iconify-icon icon="mdi:category" class="menu-icon"></iconify-icon>
                     <span>Categories</span>
                 </a>
@@ -63,7 +63,7 @@
 
             <!-- Orders Section -->
             <li class="dropdown {{ Request::routeIs('orders.*') ? 'active' : '' }}">
-                <a href="{{ route('orders.index') }}">
+                <a href="{{ route('admin.orders.index') }}">
                     <iconify-icon icon="mdi:cart" class="menu-icon"></iconify-icon>
                     <span>Orders</span>
                 </a>
