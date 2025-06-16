@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use App\Models\Cart; // <-- TAMBAHKAN BARIS INI
 
 class ProfileController extends Controller
 {
@@ -16,8 +17,24 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        
+        // TAMBAHKAN LOGIKA UNTUK MENGHITUNG CART
+        $cartCount = 0;
+        if (Auth::check()) {
+            $cartCount = Cart::where('user_id', Auth::id())->count();
+        }
+
+        if ($user->role == 'admin') {
+            return view('admin.profile.edit', [
+                'user' => $user,
+                // Anda mungkin tidak butuh cart count di admin, tapi jika iya, bisa ditambahkan
+            ]);
+        }
+        
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'cartCount' => $cartCount, // <-- KIRIM VARIABEL KE VIEW
         ]);
     }
 

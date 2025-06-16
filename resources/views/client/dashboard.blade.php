@@ -248,60 +248,66 @@
 
     <!-- Contact Section -->
     <section class="contact-one">
-        <div class="contact-one-shape-4 wow slideInLeft" data-wow-delay="100ms" data-wow-duration="2500ms">
-            <img src="{{ asset('assets/images/shapes/contact-one-shape-4.png') }}" alt="">
+        <div class="contact-one-shape-1 float-bob-x">
+            <img src="{{ asset('assets/images/shapes/contact-one-shape-1.png') }}" alt="">
         </div>
-        <div class="contact-one__container">
-            <div class="container">
+        <div class="container">
+            <div class="section-title text-center">
+                <span class="section-title__tagline">Need any cleaning service</span>
+                <h2 class="section-title__title">Get a Free Estimate</h2>
+                <div class="section-title__icon">
+                    <img src="{{ asset('assets/images/icon/section-title-icon-1.png') }}" alt="">
+                </div>
+            </div>
+            <div class="contact-one__inner">
                 <div class="row">
                     <div class="col-xl-7 col-lg-7">
                         <div class="contact-one__left">
-                            <div class="section-title text-left">
-                                <span class="section-title__tagline">Get a Free Estimate</span>
-                                <h2 class="section-title__title">Contact for Services</h2>
+                            <div class="contact-one__form-box">
+                                {{-- INI ADALAH BAGIAN FORM YANG PERLU ANDA GANTI --}}
+                                <form action="{{ route('inquiry.submit') }}" method="POST" class="comment-form">
+                                    @csrf
+                                    <div class="row">
+                                        <div class="col-xl-6">
+                                            <div class="comment-form__input-box">
+                                                <input type="text" placeholder="Your Name" name="name" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-xl-6">
+                                            <div class="comment-form__input-box">
+                                                <input type="email" placeholder="Email Address" name="email" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-xl-6">
+                                            <div class="comment-form__input-box">
+                                                <input type="text" placeholder="Phone Number" name="phone">
+                                            </div>
+                                        </div>
+                                        <div class="col-xl-6">
+                                            <div class="comment-form__input-box">
+                                                {{-- Dropdown untuk memilih layanan Jasa --}}
+                                                <div class="select-box">
+                                                    <select name="service" class="wide" aria-label="Select service">
+                                                        <option data-display="Select service">Select service</option>
+                                                        {{-- Loop ini akan mengambil data jasa dari database --}}
+                                                        @foreach($jasas as $jasa)
+                                                            <option value="{{ $jasa->id }}">{{ $jasa->nama }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-xl-12">
+                                            <div class="comment-form__input-box">
+                                                <textarea name="message" placeholder="Write message"></textarea>
+                                            </div>
+                                            <button type="submit" class="thm-btn comment-form__btn">Send a message <i class="fa fa-angle-right"></i></button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                            <form action="#" class="contact-one__form" method="POST">
-                                @csrf
-                                <div class="row">
-                                    <div class="col-xl-6 col-lg-6 col-md-6">
-                                        <div class="contact-one__form-input-box">
-                                            <input type="text" placeholder="Full name" name="name" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-lg-6 col-md-6">
-                                        <div class="contact-one__form-input-box">
-                                            <input type="email" placeholder="Your email" name="email" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-lg-6 col-md-6">
-                                        <div class="contact-one__form-input-box">
-                                            <input type="text" placeholder="Phone number" name="phone">
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-lg-6 col-md-6">
-                                        <div class="contact-one__form-input-box">
-                                            <select class="selectpicker" name="service">
-                                                <option selected>Select service</option>
-                                                @if(isset($jasas))
-                                                    @foreach($jasas as $jasa)
-                                                        <option value="{{ $jasa->id }}">{{ $jasa->nama }}</option>
-                                                    @endforeach
-                                                @endif
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-xl-12">
-                                        <div class="contact-one__form-input-box text-message-box">
-                                            <textarea name="message" placeholder="Write message"></textarea>
-                                        </div>
-                                        <div class="contact-one__btn-box">
-                                            <button type="submit" class="thm-btn contact-one__btn">Send a message <i class="fa fa-angle-right"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
                         </div>
                     </div>
                     <div class="col-xl-5 col-lg-5">

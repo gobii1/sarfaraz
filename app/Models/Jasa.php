@@ -11,12 +11,12 @@ class Jasa extends Model
 {
     use HasFactory;
 
-   protected $fillable = [
-        'nama',
-        'deskripsi',
-        'harga',
-        'category_id',
-        'image',  // Tambahkan 'image' ke dalam $fillable
+    // Tambahkan 'gallery_images' ke dalam fillable
+    protected $fillable = ['nama', 'deskripsi', 'harga', 'category_id', 'image', 'gallery_images'];
+
+    // Tambahkan casting untuk 'gallery_images' sebagai array
+    protected $casts = [
+        'gallery_images' => 'array',
     ];
 
     public function category()

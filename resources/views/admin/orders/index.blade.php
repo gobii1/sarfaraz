@@ -1,25 +1,23 @@
-@extends('layouts.layout') {{-- Pastikan ini sesuai dengan layout admin Anda --}}
+{{-- File: resources/views/admin/orders/index.blade.php --}}
+@extends('layouts.layout')
 
-{{-- Definisi title dan subTitle yang akan dioper ke x-breadcrumb --}}
 @section('title', 'Manajemen Pesanan')
-{{-- @section('subTitle', 'Daftar Pesanan') --}} {{-- Opsional, jika Anda ingin subTitle di breadcrumb --}}
 
 @section('content')
-{{-- Hapus seluruh kode <section class="page-header">...</section> dari sini.
-    Yang akan merender breadcrumb dan title adalah <x-breadcrumb /> di layouts/layout.blade.php --}}
-
 <section class="order-list-section py-5">
-    <div class="container">
+    <div class="container-fluid">
         @if (session('success'))
-            <div class="alert alert-success">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
         @if (session('error'))
-            <div class="alert alert-danger">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-        @enderror
+        @endif
 
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -31,56 +29,50 @@
                         <thead>
                             <tr>
                                 <th>ID Pesanan</th>
-                                <th>Ringkasan Pesanan</th>
-                                <th>User</th>
+                                <th>Nama Pelanggan</th>
                                 <th>Total Harga</th>
                                 <th>Status Pesanan</th>
                                 <th>Status Pembayaran</th>
-                                <th>Tanggal Dibuat</th>
+                                <th>Metode Pembayaran</th>
+                                <th>Tanggal</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($orders as $order)
                                 <tr>
-                                    <td>#{{ $order->id }}</td>
+                                    {{-- PERBAIKAN #1: Menampilkan ID Pesanan dengan benar --}}
                                     <td>
-                                        @if ($order->orderItems->isNotEmpty())
-                                            <strong>{{ $order->orderItems->first()->product->name ?? 'Produk Dihapus' }}</strong>
-                                            @if ($order->orderItems->count() > 1)
-                                                <br>+ {{ $order->orderItems->count() - 1 }} produk lainnya
-                                            @endif
-                                        @else
-                                            Tidak ada item
-                                        @endif
+                                        <a href="{{ route('admin.orders.show', $order->id) }}" class="text-primary fw-bold">#{{ $order->id }}</a>
                                     </td>
-                                    <td>{{ $order->user->name ?? 'User Dihapus' }}</td>
+                                    <td>
+                                        <h5 class="font-14 my-1 fw-normal">{{ $order->customer_name }}</h5>
+                                        {{-- PERBAIKAN #2: Memberi nilai default jika user tidak ada --}}
+                                        <span class="text-muted font-13">{{ $order->user->email ?? 'User Tamu/Dihapus' }}</span>
+                                    </td>
+                                    {{-- INFO: Kode ini sudah benar, masalah Rp 0 ada di data lama --}}
                                     <td>Rp{{ number_format($order->total_price, 0, ',', '.') }}</td>
                                     <td>
-                                        <span class="badge {{
-                                            $order->status == 'pending' ? 'bg-warning' :
-                                            ($order->status == 'completed' ? 'bg-success' :
-                                            ($order->status == 'cancelled' ? 'bg-danger' :
-                                            ($order->status == 'on hold' ? 'bg-info' : 'bg-secondary')))
-                                        }}">{{ ucfirst($order->status) }}</span>
+                                        <span class="badge bg-{{ $order->status == 'completed' ? 'success' : ($order->status == 'cancelled' ? 'danger' : 'warning') }}">
+                                            {{ ucfirst($order->status) }}
+                                        </span>
                                     </td>
                                     <td>
-                                        <span class="badge {{
-                                            $order->payment_status == 'pending' ? 'bg-warning' :
-                                            ($order->payment_status == 'paid' ? 'bg-success' :
-                                            ($order->payment_status == 'failed' || $order->payment_status == 'expired' ? 'bg-danger' :
-                                            ($order->payment_status == 'challenge' ? 'bg-info' : 'bg-secondary')))
-                                        }}">{{ ucfirst($order->payment_status) }}</span>
+                                        <span class="badge bg-{{ $order->payment_status == 'paid' ? 'success' : 'secondary' }}">
+                                            {{ ucfirst($order->payment_status) }}
+                                        </span>
                                     </td>
-                                    <td>{{ $order->created_at->format('d M Y H:i') }}</td>
+                                    <td>{{ $order->payment_method }}</td>
+                                    <td>{{ $order->created_at->format('d M Y, H:i') }}</td>
                                     <td>
-                                        <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-info" title="Lihat Detail">
+                                        <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-info" title="Lihat">
                                             <iconify-icon icon="ri:eye-line"></iconify-icon>
                                         </a>
                                         <a href="{{ route('admin.orders.edit', $order->id) }}" class="btn btn-sm btn-primary" title="Edit">
                                             <iconify-icon icon="ri:edit-line"></iconify-icon>
                                         </a>
-                                        <form action="{{ route('admin.orders.destroy', $order->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pesanan ini? Aksi ini tidak dapat dibatalkan dan stok produk akan dikembalikan.');">
+                                        {{-- PERBAIKAN #3: Memastikan form hapus ada dan berfungsi --}}
+                                        <form action="{{ route('admin.orders.destroy', $order->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pesanan ini? Aksi ini tidak dapat dibatalkan.');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger" title="Hapus">

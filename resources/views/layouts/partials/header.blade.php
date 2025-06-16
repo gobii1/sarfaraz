@@ -73,8 +73,8 @@
                                 <li class="{{ Request::routeIs('client.dashboard') ? 'current' : '' }}">
                                     <a href="{{ route('client.dashboard') }}">Home</a>
                                 </li>
-                                <li class="{{ Request::routeIs('client.about') ? 'current' : '' }}">
-                                    <a href="{{ route('client.about') }}">About</a>
+                                <li class="{{ Request::routeIs('about') ? 'current' : '' }}">
+                                    <a href="{{ route('about') }}">About</a>
                                 </li>
                                 <li class="{{ Request::routeIs('jasa.index') ? 'current' : '' }}">
                                     <a href="{{ route('jasa.index') }}">Services</a>

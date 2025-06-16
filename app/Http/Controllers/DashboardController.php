@@ -5,35 +5,39 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Jasa;
+use App\Models\Inquiry;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    // Inside your AdminController
+    public function index()
+    {
+        // --- Data yang sudah Anda miliki ---
+        $totalRevenue = Order::where('status', 'completed')->sum('total_price');
+        $totalProducts = Product::count();
+        $totalCustomers = User::where('role', 'client')->count();
+        $latestOrders = Order::with('user')->latest()->take(5)->get();
 
-use App\Models\Order;
-use App\Models\Product;
-use App\Models\User;
+        // --- Data Jasa & Inquiry ---
+        $totalJasa = Jasa::count();
+        $newInquiriesCount = Inquiry::where('is_read', false)->count();
+        $latestInquiries = Inquiry::with('jasa')->latest()->take(5)->get();
 
-public function dashboard()
-{
-    // Calculate total revenue (sum of all orders' total price)
-    $totalRevenue = Order::sum('price');
+        // <<< INI DIA PERBAIKANNYA >>>
+        // Tambahkan baris ini untuk menghitung total semua pesanan
+        $totalOrders = Order::count();
 
-    // Calculate total expense (this might come from another model or calculation)
-    $totalExpense = 20000; // Example static value, replace with actual logic
-
-    // Calculate total products
-    $totalProducts = Product::count();
-
-    // Calculate total customers
-    $totalCustomers = User::where('role', 'client')->count();
-
-    // Calculate total orders
-    $totalOrders = Order::count();
-
-    // Pass data to the view
-    return view('admin.dashboard', compact('totalRevenue', 'totalExpense', 'totalProducts', 'totalCustomers', 'totalOrders'));
-}
-
+        // Kirim semua data (termasuk variabel baru) ke view
+        return view('admin.dashboard', compact(
+            'totalRevenue',
+            'totalProducts',
+            'totalCustomers',
+            'latestOrders',
+            'totalJasa',
+            'newInquiriesCount',
+            'latestInquiries',
+            'totalOrders' // <-- Tambahkan variabelnya di sini
+        ));
+    }
 }

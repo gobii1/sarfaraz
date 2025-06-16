@@ -320,4 +320,33 @@ class OrderController extends Controller
             return response()->json(['message' => 'Error handling notification'], 500);
         }
     }
+    public function destroy(Order $order)
+{
+    try {
+        // Mulai transaksi database untuk memastikan semua operasi berhasil
+        DB::beginTransaction();
+
+        // Hapus dulu semua item yang terkait dengan pesanan ini
+        $order->orderItems()->delete();
+
+        // Setelah itu, baru hapus data pesanan utamanya
+        $order->delete();
+
+        // Konfirmasi transaksi jika semua berhasil
+        DB::commit();
+
+        // Kembalikan ke halaman daftar pesanan dengan pesan sukses
+        return redirect()->route('admin.orders.index')->with('success', 'Pesanan #' . $order->id . ' berhasil dihapus.');
+
+    } catch (\Exception $e) {
+        // Batalkan semua operasi jika terjadi error
+        DB::rollBack();
+
+        // Catat error ke log untuk debugging
+        Log::error('Gagal menghapus pesanan #' . $order->id . ': ' . $e->getMessage());
+
+        // Kembalikan ke halaman daftar pesanan dengan pesan error
+        return redirect()->route('admin.orders.index')->with('error', 'Gagal menghapus pesanan. Silakan coba lagi.');
+    }
+}
 }

@@ -19,13 +19,9 @@
                 <h3 class="mb-0">Detail Pesanan #{{ $order->id }}</h3>
                 <div>
                     {{-- TOMBOL: Sesuaikan kelas tombol Anda --}}
-                    {{-- Misal: btn-success, btn-outline-primary, btn-info-fill, dll. --}}
-                    <a href="{{ route('admin.orders.edit', $order->id) }}" class="btn btn-sm btn-primary theme-btn-edit"> {{-- Ganti 'btn-primary theme-btn-edit' --}}
-                        <iconify-icon icon="ri:edit-line"></iconify-icon> Edit Status
-                    </a>
-                    <a href="{{ route('admin.orders.index') }}" class="btn btn-sm btn-secondary theme-btn-back"> {{-- Ganti 'btn-secondary theme-btn-back' --}}
-                        <iconify-icon icon="ri:arrow-go-back-line"></iconify-icon> Kembali ke Daftar
-                    </a>
+                    {{-- Misal: btn-success, btn-outline-primary, dll. --}}
+                    <a href="{{ route('admin.orders.edit', $order->id) }}" class="btn btn-primary btn-sm">Edit Pesanan</a>
+                    <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm">Kembali ke Daftar Pesanan</a>
                 </div>
             </div>
 
@@ -35,50 +31,40 @@
                 <div class="row">
                     <div class="col-md-6">
                         <h4>Informasi Pesanan</h4>
-                        {{-- LIST GROUP: Sesuaikan kelas list group --}}
-                        {{-- Mungkin ada 'list-group', 'list-unstyled', 'custom-list-style', dll. --}}
-                        <ul class="list-group list-group-flush custom-list-style"> {{-- Ganti 'custom-list-style' --}}
-                            <li class="list-group-item"><strong>ID Pesanan:</strong> #{{ $order->id }}</li>
-                            <li class="list-group-item"><strong>User:</strong> {{ $order->user->name ?? 'User Dihapus' }} ({{ $order->user->email ?? 'N/A' }})</li>
-                            <li class="list-group-item"><strong>Total Harga:</strong> Rp{{ number_format($order->total_price, 0, ',', '.') }}</li>
-                            <li class="list-group-item">
-                                <strong>Status Pesanan:</strong>
-                                {{-- BADGE: Sesuaikan kelas badge Anda --}}
-                                {{-- Mungkin ada 'badge badge-success', 'label label-warning', 'status-tag pending', dll. --}}
-                                <span class="badge {{
-                                    $order->status == 'pending' ? 'bg-warning' :
-                                    ($order->status == 'completed' ? 'bg-success' :
-                                    ($order->status == 'cancelled' ? 'bg-danger' :
-                                    ($order->status == 'on hold' ? 'bg-info' : 'bg-secondary')))
-                                }} custom-badge-style">{{ ucfirst($order->status) }}</span> {{-- Ganti 'custom-badge-style' --}}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Status Pembayaran:</strong>
-                                <span class="badge {{
-                                    $order->payment_status == 'pending' ? 'bg-warning' :
-                                    ($order->payment_status == 'paid' ? 'bg-success' :
-                                    ($order->payment_status == 'failed' || $order->payment_status == 'expired' ? 'bg-danger' :
-                                    ($order->payment_status == 'challenge' ? 'bg-info' : 'bg-secondary')))
-                                }} custom-badge-style">{{ ucfirst($order->payment_status) }}</span> {{-- Ganti 'custom-badge-style' --}}
-                            </li>
-                            <li class="list-group-item"><strong>Tanggal Pesan:</strong> {{ $order->created_at->format('d M Y H:i') }}</li>
-                            <li class="list-group-item"><strong>Tanggal Diperbarui:</strong> {{ $order->updated_at->format('d M Y H:i') }}</li>
-                            <li class="list-group-item"><strong>Snap Token (Midtrans):</strong> {{ $order->snap_token ?? '-' }}</li>
-                            <li class="list-group-item"><strong>Transaction ID (Midtrans):</strong> {{ $order->midtrans_transaction_id ?? '-' }}</li>
-                        </ul>
+                        <p><strong>ID Pesanan Sistem:</strong> #{{ $order->id }}</p>
+                        <p><strong>Nomor Pesanan Pengguna:</strong> #{{ $order->user_order_number ?? 'N/A' }}</p> {{-- Menampilkan user_order_number --}}
+                        <p><strong>Dibuat Oleh User:</strong> {{ $order->user->name ?? 'User Dihapus' }} (ID: {{ $order->user_id }})</p>
+                        <p><strong>Email User:</strong> {{ $order->user->email ?? 'N/A' }}</p>
+                        <p><strong>Tanggal Pesanan:</strong> {{ $order->created_at->format('d M Y H:i:s') }}</p>
+                        <p><strong>Jumlah Total:</strong> Rp{{ number_format($order->total_amount, 0, ',', '.') }}</p>
+                        <p><strong>Status Pesanan:</strong> 
+                            <span class="badge 
+                                @if($order->status == 'pending') bg-warning 
+                                @elseif($order->status == 'processing') bg-info 
+                                @elseif($order->status == 'completed') bg-success 
+                                @else bg-danger @endif">
+                                {{ ucfirst($order->status) }}
+                            </span>
+                        </p>
+                        <p><strong>Status Pembayaran:</strong> 
+                            <span class="badge 
+                                @if($order->payment_status == 'pending') bg-warning 
+                                @elseif($order->payment_status == 'settlement' || $order->payment_status == 'capture') bg-success 
+                                @else bg-danger @endif">
+                                {{ ucfirst(str_replace('_', ' ', $order->payment_status)) }}
+                            </span>
+                        </p>
+                        <p><strong>ID Transaksi Midtrans:</strong> {{ $order->midtrans_transaction_id ?? 'Belum ada' }}</p>
+                        {{-- <p><strong>Midtrans Raw Response:</strong> <pre>{{ json_encode($order->midtrans_response_raw, JSON_PRETTY_PRINT) }}</pre></p> --}}
                     </div>
                     <div class="col-md-6">
                         <h4>Item Pesanan</h4>
-                        {{-- RESPONSIVE TABLE CONTAINER: Cek apakah tema Anda punya div responsif tabel khusus --}}
-                        {{-- Misal: 'table-responsive', 'scrollable-table', dll. --}}
-                        <div class="table-responsive custom-table-wrapper"> {{-- Ganti 'custom-table-wrapper' --}}
-                            {{-- TABEL: Sesuaikan kelas tabel Anda --}}
-                            {{-- Misal: 'table table-hover', 'table-bordered', 'data-table', dll. --}}
-                            <table class="table table-sm table-bordered custom-data-table"> {{-- Ganti 'custom-data-table' --}}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
                                 <thead>
                                     <tr>
                                         <th>Produk</th>
-                                        <th>Kuantitas</th>
+                                        <th>Jumlah</th>
                                         <th>Harga Satuan</th>
                                         <th>Subtotal</th>
                                     </tr>
@@ -86,7 +72,7 @@
                                 <tbody>
                                     @forelse ($order->orderItems as $item)
                                         <tr>
-                                            <td>{{ $item->product->name ?? 'Produk Dihapus' }}</td>
+                                            <td>{{ $item->product->nama ?? 'Produk Dihapus' }}</td>
                                             <td>{{ $item->quantity }}</td>
                                             <td>Rp{{ number_format($item->price, 0, ',', '.') }}</td>
                                             <td>Rp{{ number_format($item->quantity * $item->price, 0, ',', '.') }}</td>
