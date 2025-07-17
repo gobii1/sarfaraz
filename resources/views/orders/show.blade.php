@@ -1,6 +1,6 @@
-@extends('layouts.app') {{-- Pastikan Anda menggunakan layout yang sesuai, misal layouts.app atau layouts.client --}}
+@extends('layouts.app')
 
-@section('title', 'Detail Pesanan #' . $order->id)
+@section('title', 'Detail Pesanan #' . $order->user_order_id)
 
 @section('content')
 <section class="page-header">
@@ -15,7 +15,7 @@
                 <li><span>/</span></li>
                 <li>Detail</li>
             </ul>
-            <h2>Detail Pesanan #{{ $order->id }}</h2>
+            <h2>Detail Pesanan #{{ $order->user_order_id }}</h2>
         </div>
     </div>
 </section>
@@ -38,7 +38,7 @@
                 <h3>Ringkasan Pesanan</h3>
             </div>
             <div class="card-body">
-                <p><strong>ID Pesanan:</strong> #{{ $order->id }}</p>
+                <p><strong>ID Pesanan:</strong> #{{ $order->user_order_id }} (Ref: {{ $order->id }})</p>
                 <p><strong>Total Harga:</strong> Rp{{ number_format($order->total_price, 0, ',', '.') }}</p>
                 <p><strong>Status Pesanan:</strong> <span class="badge {{ $order->status == 'completed' ? 'bg-success' : ($order->status == 'cancelled' ? 'bg-danger' : 'bg-warning') }}">{{ ucfirst($order->status) }}</span></p>
                 <p><strong>Status Pembayaran:</strong> <span class="badge {{ $order->payment_status == 'paid' ? 'bg-success' : ($order->payment_status == 'pending' ? 'bg-warning' : 'bg-danger') }}">{{ ucfirst($order->payment_status) }}</span></p>
@@ -108,26 +108,17 @@
         data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
     <script type="text/javascript">
         document.getElementById('pay-button').onclick = function(){
-            // SnapToken yang sudah kita dapatkan dari controller
             snap.pay('{{ $order->snap_token }}', {
                 onSuccess: function(result){
-                    /* You may add your own implementation here */
-                    alert("Pembayaran berhasil!");
-                    console.log(result);
-                    window.location.reload(); // Refresh halaman untuk update status
+                    alert("Pembayaran berhasil!"); console.log(result); window.location.reload();
                 },
                 onPending: function(result){
-                    /* You may add your own implementation here */
-                    alert("Menunggu pembayaran Anda!");
-                    console.log(result);
+                    alert("Menunggu pembayaran Anda!"); console.log(result);
                 },
                 onError: function(result){
-                    /* You may add your own implementation here */
-                    alert("Pembayaran gagal!");
-                    console.log(result);
+                    alert("Pembayaran gagal!"); console.log(result);
                 },
                 onClose: function(){
-                    /* You may add your own implementation here */
                     alert('Anda menutup pop-up tanpa menyelesaikan pembayaran.');
                 }
             });
@@ -138,22 +129,11 @@
 
 @section('styles')
 <style>
-    /* Tambahan CSS dasar untuk badge status */
-    .badge {
-        padding: 0.5em 0.75em;
-        border-radius: 0.25rem;
-        font-size: 0.85em;
-        font-weight: 700;
-        color: #fff;
-    }
+    .badge { padding: 0.5em 0.75em; border-radius: 0.25rem; font-size: 0.85em; font-weight: 700; color: #fff; }
     .bg-success { background-color: #28a745; }
     .bg-warning { background-color: #ffc107; }
     .bg-danger { background-color: #dc3545; }
-    .table-responsive {
-        margin-top: 20px;
-    }
-    .card-header h3 {
-        margin-bottom: 0;
-    }
+    .table-responsive { margin-top: 20px; }
+    .card-header h3 { margin-bottom: 0; }
 </style>
 @endsection

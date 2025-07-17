@@ -1,5 +1,5 @@
 {{-- resources/views/orders/index.blade.php (untuk client) --}}
-@extends('layouts.app') {{-- Sesuaikan dengan layout client Anda, kemungkinan 'layouts.app' atau 'client.layout' --}}
+@extends('layouts.app')
 
 @section('title', 'Daftar Pesanan Saya')
 
@@ -41,8 +41,8 @@
                     <table class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>ID Pesanan</th>
-                                <th>Ringkasan Pesanan</th> {{-- Kolom Baru --}}
+                                <th>ID Pesanan</th> {{-- Judul kolom tetap --}}
+                                <th>Ringkasan Pesanan</th>
                                 <th>Total Harga</th>
                                 <th>Status Pesanan</th>
                                 <th>Status Pembayaran</th>
@@ -53,10 +53,11 @@
                         <tbody>
                             @forelse ($orders as $order)
                                 <tr>
-                                    <td>#{{ $order->id }}</td>
+                                    {{-- INI PERUBAHANNYA: Tampilkan user_order_id --}}
+                                    <td>#{{ $order->user_order_id }}</td>
+                                    
                                     <td>
                                         @if ($order->orderItems->isNotEmpty())
-                                            {{-- Tampilkan nama produk pertama --}}
                                             <strong>{{ $order->orderItems->first()->product->name ?? 'Produk Dihapus' }}</strong>
                                             @if ($order->orderItems->count() > 1)
                                                 <br>+ {{ $order->orderItems->count() - 1 }} produk lainnya
@@ -64,7 +65,7 @@
                                         @else
                                             Tidak ada item
                                         @endif
-                                    </td> {{-- Isi Kolom Baru --}}
+                                    </td>
                                     <td>Rp{{ number_format($order->total_price, 0, ',', '.') }}</td>
                                     <td>
                                         <span class="badge {{
@@ -84,16 +85,13 @@
                                     </td>
                                     <td>{{ $order->created_at->format('d M Y H:i') }}</td>
                                     <td>
+                                        {{-- LINK INI HARUS TETAP MENGGUNAKAN $order->id --}}
                                         <a href="{{ route('orders.show', $order->id) }}" class="btn btn-sm btn-primary">Lihat Detail</a>
-                                        {{-- Tambahkan tombol batalkan pesanan jika statusnya pending dan belum dibayar --}}
-                                        {{-- @if ($order->status == 'pending' && $order->payment_status == 'pending')
-                                            <a href="#" class="btn btn-sm btn-danger">Batalkan</a>
-                                        @endif --}}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">Anda belum memiliki pesanan.</td> {{-- Jumlah colspan disesuaikan --}}
+                                    <td colspan="7" class="text-center">Anda belum memiliki pesanan.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -106,27 +104,14 @@
 @endsection
 
 @section('styles')
+{{-- Style tidak perlu diubah, biarkan saja --}}
 <style>
-    .badge {
-        padding: 0.35em 0.65em;
-        font-size: 0.75em;
-        font-weight: 700;
-        line-height: 1;
-        color: #fff;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 0.25rem;
-    }
+    .badge { padding: 0.35em 0.65em; font-size: 0.75em; font-weight: 700; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 0.25rem; }
     .bg-warning { background-color: #ffc107 !important; color: #000 !important; }
     .bg-success { background-color: #28a745 !important; }
     .bg-danger { background-color: #dc3545 !important; }
     .bg-info { background-color: #17a2b8 !important; }
     .bg-secondary { background-color: #6c757d !important; }
-    .btn-primary {
-        color: #fff;
-        background-color: #007bff;
-        border-color: #007bff;
-    }
+    .btn-primary { color: #fff; background-color: #007bff; border-color: #007bff; }
 </style>
 @endsection

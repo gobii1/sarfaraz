@@ -71,79 +71,88 @@ class OrderController extends Controller
      * Store a newly created order (Handle the checkout process).
      */
     public function store(Request $request)
-    {
-        DB::beginTransaction();
-        try {
-            $cartItems = Cart::where('user_id', Auth::id())->with('product')->get();
+{
+    DB::beginTransaction();
+    try {
+        $cartItems = Cart::where('user_id', Auth::id())->with('product')->get();
 
-            if ($cartItems->isEmpty()) {
+        if ($cartItems->isEmpty()) {
+            DB::rollBack();
+            return redirect()->route('client.cart.index')->with('error', 'Keranjang Anda kosong! Tidak bisa checkout.');
+        }
+
+        $totalPrice = 0;
+        foreach ($cartItems as $cartItem) {
+            if (!$cartItem->product || $cartItem->quantity > $cartItem->product->stock) {
                 DB::rollBack();
-                return redirect()->route('client.cart.index')->with('error', 'Keranjang Anda kosong! Tidak bisa checkout.');
+                $productName = $cartItem->product ? $cartItem->product->name : 'Produk Tidak Ditemukan';
+                $availableStock = $cartItem->product ? $cartItem->product->stock : 0;
+                return redirect()->route('client.cart.index')->with('error', 'Stok produk "' . $productName . '" tidak mencukupi. Hanya tersedia ' . $availableStock . ' unit.');
             }
+            $totalPrice += $cartItem->price * $cartItem->quantity;
+        }
 
-            $totalPrice = 0;
-            foreach ($cartItems as $cartItem) {
-                if (!$cartItem->product || $cartItem->quantity > $cartItem->product->stock) {
-                    DB::rollBack();
-                    $productName = $cartItem->product ? $cartItem->product->name : 'Produk Tidak Ditemukan';
-                    $availableStock = $cartItem->product ? $cartItem->product->stock : 0;
-                    return redirect()->route('client.cart.index')->with('error', 'Stok produk "' . $productName . '" tidak mencukupi. Hanya tersedia ' . $availableStock . ' unit.');
-                }
-                $totalPrice += $cartItem->price * $cartItem->quantity;
-            }
+        // --- IMPLEMENTASI DIMULAI DI SINI ---
 
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'total_price' => $totalPrice,
-                'status' => 'pending',
-                'payment_status' => 'pending',
+        // 1. Hitung nomor urut pesanan untuk user yang sedang login.
+        $userOrderId = Order::where('user_id', Auth::id())->count() + 1;
+
+        // 2. Tambahkan 'user_order_id' saat membuat order baru.
+        $order = Order::create([
+            'user_id'       => Auth::id(),
+            'user_order_id' => $userOrderId, // <-- TAMBAHKAN FIELD INI
+            'total_price'   => $totalPrice,
+            'status'        => 'pending',
+            'payment_status' => 'pending',
+        ]);
+
+        // --- IMPLEMENTASI SELESAI ---
+
+
+        foreach ($cartItems as $cartItem) {
+            OrderItem::create([
+                'order_id'   => $order->id,
+                'product_id' => $cartItem->product_id,
+                'quantity'   => $cartItem->quantity,
+                'price'      => $cartItem->price,
             ]);
 
-            foreach ($cartItems as $cartItem) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $cartItem->product_id,
-                    'quantity' => $cartItem->quantity,
-                    'price' => $cartItem->price,
-                ]);
-
-                $product = $cartItem->product;
-                if ($product) {
-                    $product->stock -= $cartItem->quantity;
-                    $product->save();
-                }
+            $product = $cartItem->product;
+            if ($product) {
+                $product->stock -= $cartItem->quantity;
+                $product->save();
             }
-
-            Log::info('--- Attempting to create Snap Token (OrderController@store) ---');
-            Log::info('Order ID for Snap: ' . $order->id);
-            Log::info('Total Price for Snap: ' . $order->total_price);
-
-            $midtrans = new CreateSnapTokenService($order);
-            $snapToken = $midtrans->getSnapToken();
-
-            Log::info('Snap Token generated: ' . $snapToken);
-
-            $order->snap_token = $snapToken;
-            $order->save();
-
-            foreach ($cartItems as $cartItem) {
-                $cartItem->delete();
-            }
-
-            DB::commit();
-
-            return redirect()->route('orders.show', $order->id)
-                ->with('success', 'Pemesanan berhasil! Silakan lakukan pembayaran.')
-                ->with('snap_token', $snapToken);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Order creation error (Snap Token): ' . $e->getMessage());
-            Log::error('Stack trace (Order creation): ' . $e->getTraceAsString());
-            return redirect()->route('client.cart.index')->with('error', 'Terjadi kesalahan saat membuat transaksi: ' . $e->getMessage());
         }
-    }
 
+        Log::info('--- Attempting to create Snap Token (OrderController@store) ---');
+        Log::info('Order ID for Snap: ' . $order->id);
+        Log::info('Total Price for Snap: ' . $order->total_price);
+
+        $midtrans = new CreateSnapTokenService($order);
+        $snapToken = $midtrans->getSnapToken();
+
+        Log::info('Snap Token generated: ' . $snapToken);
+
+        $order->snap_token = $snapToken;
+        $order->save();
+
+        foreach ($cartItems as $cartItem) {
+            $cartItem->delete();
+        }
+
+        DB::commit();
+
+        return redirect()->route('orders.show', $order->id)
+            ->with('success', 'Pemesanan berhasil! Silakan lakukan pembayaran.')
+            ->with('snap_token', $snapToken);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Order creation error (Snap Token): ' . $e->getMessage());
+        Log::error('Stack trace (Order creation): ' . $e->getTraceAsString());
+        return redirect()->route('client.cart.index')->with('error', 'Terjadi kesalahan saat membuat transaksi: ' . $e->getMessage());
+    }
+}
     /**
      * Display the specified order.
      */
@@ -151,25 +160,29 @@ class OrderController extends Controller
     {
         $order = null;
 
-        // --- KUNCI PERUBAHAN DI SINI: Deteksi Rute Admin atau Client ---
         if (request()->routeIs('admin.orders.show')) {
             // Untuk Admin:
-            // Ambil semua pesanan, eager load order items, produk terkait, dan user pemesan
             $order = Order::with('orderItems.product', 'user')->findOrFail($id);
-            // Render view untuk admin
             return view('admin.orders.show', compact('order'));
+
         } else {
             // Untuk Client (default jika bukan rute admin):
-            // Hanya ambil pesanan yang dimiliki oleh user yang sedang login
+
+            // --- TAMBAHAN DIMULAI DI SINI ---
+            $cartCount = 0;
+            if (Auth::check()) {
+                $cartCount = Cart::where('user_id', Auth::id())->count();
+            }
+            // --- TAMBAHAN SELESAI ---
+
             $order = Order::where('user_id', Auth::id())
                           ->with('orderItems.product')
                           ->findOrFail($id);
-            // Render view untuk client
-            return view('orders.show', compact('order'));
+                          
+            // Kirim variabel $order DAN $cartCount ke view
+            return view('orders.show', compact('order', 'cartCount'));
         }
-        // --- AKHIR KUNCI PERUBAHAN ---
     }
-
     /**
      * Show the form for editing the specified order (Admin).
      */
